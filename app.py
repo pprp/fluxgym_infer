@@ -155,6 +155,22 @@ def run_captioning(images, concept_sentence, *captions):
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
+def run_inference(prompt, model_name):
+    print(f"run_inference")
+    print(f"prompt {prompt}")
+
+    # Construct the command to call the script
+    command = f"CUDA_VISIBLE_DEVICES=5 python sd-scripts/flux_minimal_inference.py --ckpt_path ./models/unet/flux1-dev.sft " \
+              f"--clip_l models/clip/clip_l.safetensors --t5xxl models/clip/t5xxl_fp16.safetensors " \
+              f"--ae ./models/vae/ae.sft --lora_weights ./outputs/{model_name}.safetensors " \
+              f"--prompt \"{prompt}\" --offload --steps 20"
+
+    # Assuming the script returns the path to the generated image
+    image_path = './output.png'
+    image = Image.open(image_path).convert("RGB")
+
+    return image
+
 def recursive_update(d, u):
     for k, v in u.items():
         if isinstance(v, dict) and v:
@@ -303,6 +319,8 @@ def update_total_steps(max_train_epochs, num_repeats, images):
 
 def loaded():
     print("launched")
+    
+    
 def start_training(
     lora_name,
     resolution,
@@ -506,7 +524,22 @@ with gr.Blocks(elem_id="app", theme=theme, css=css) as demo:
 """, elem_classes="group_padding")
             start = gr.Button("Start training", visible=False)
             output_components.append(start)
-        #    terminal = LogsView()
+        
+        
+        with gr.Column():
+            gr.Markdown(
+                """# Step 4. Inference
+<p style="margin-top:0">Enter a prompt to generate a caption.</p>
+""", elem_classes="group_padding")
+            prompt_input = gr.Textbox(label="Enter your prompt", interactive=True)
+            lora_name_input = gr.Textbox(label="Enter the LoRA name", interactive=True)
+            inference_button = gr.Button("Run Inference")
+            generated_image = gr.Image(label="Generated Image", interactive=False)
+            inference_button.click(
+                fn=lambda prompt, lora_name: run_inference(prompt, lora_name),
+                inputs=[prompt_input, lora_name_input],
+                outputs=[generated_image]
+            )
 
         #progress_area = gr.Markdown("")
     with gr.Row():
@@ -583,4 +616,4 @@ with gr.Blocks(elem_id="app", theme=theme, css=css) as demo:
 
 if __name__ == "__main__":
     cwd = os.path.dirname(os.path.abspath(__file__))
-    demo.launch(show_error=True, allowed_paths=[cwd])
+    demo.launch(show_error=True, allowed_paths=[cwd], share=True)

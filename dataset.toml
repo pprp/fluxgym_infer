@@ -1,0 +1,15 @@
+
+[general]
+shuffle_caption = false
+caption_extension = '.txt'
+keep_tokens = 1
+
+[[datasets]]
+resolution = 512
+batch_size = 1
+keep_tokens = 1
+
+[[datasets.subsets]]
+image_dir = '/mnt/sdb/dongpeijie/workspace/fluxgym/datasets/ccdac89f-8bb0-4fd3-842d-6b8821e8d759'
+class_tokens = 'WuKong Style'
+num_repeats = 10
